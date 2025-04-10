@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+
 
 jobs:
   release:
@@ -23,7 +25,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Cache the build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/go/pkg/mod
@@ -33,9 +35,9 @@ jobs:
             ${{ runner.os }}-release
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

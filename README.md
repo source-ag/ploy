@@ -15,7 +15,7 @@ It can currently verify and deploy services of the following types:
 Install the tool with `go`
 
 ```bash
-go install github.com/DandyDev/ploy
+go install github.com/source-ag/ploy
 ```
 
 ## Usage
