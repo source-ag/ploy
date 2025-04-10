@@ -2,8 +2,9 @@ package deployments
 
 import (
 	"fmt"
-	"github.com/DonDebonair/ploy/engine"
-	"github.com/DonDebonair/ploy/utils"
+
+	"github.com/source-ag/ploy/engine"
+	"github.com/source-ag/ploy/utils"
 	"github.com/spf13/cobra"
 )
 
