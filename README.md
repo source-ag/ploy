@@ -47,6 +47,12 @@ deployments:
     wait-for-service-stability: true # optional, defaults to false
     wait-for-minutes: 5 # optional, how long to wait for service stability, defaults to 30
     force-new-deployment: true # optional, defaults to false
+  - id: my-task-family # in case of ECS scheduled tasks, this is the ECS task definition family name
+    type: ecs-scheduled-task
+    rule: my-eventbridge-rule # the EventBridge rule that schedules this task
+    version: v1
+    event-bus-name: default # optional, defaults to "default"
+    version-environment-key: VERSION # optional, updates the given environment variable in the container with the version when deploying
 ```
 
 Typically, you'll have one configuration file for each environment (e.g. dev, prod, staging).
@@ -94,12 +100,13 @@ ploy update development.yml my-service my-other-service v123
 
 ## Engines
 
-There are currently two supported deployment engines:
+There are currently three supported deployment engines:
 
 - [AWS Lambda](https://aws.amazon.com/lambda/) (type: `lambda`) - with the code packaged as a Docker 
   image. Version is the image tag.
 - [AWS ECS](https://aws.amazon.com/ecs/) (type: `ecs`) - with the code packaged as a Docker image. 
   Version is the image tag.
+- [AWS ECS Scheduled Tasks](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/scheduled_tasks.html) (type: `ecs-scheduled-task`) - ECS tasks triggered on a schedule via EventBridge rules. Version is the image tag. The `id` field is the ECS task definition family name and the `rule` field is the EventBridge rule name. All targets on that rule referencing the given task definition family are updated.
 
 ## Contributing
 
@@ -109,7 +116,7 @@ Fork the repo, make your changes, and submit a pull request.
 
 - Better error handling
 - Add support for deploying new ECS task definitions for one-off tasks that are not part of a
-  service
+  service or a scheduled task
 - Add support for other deployment engines. See `github.com/DandyDev/ploy/engine` for examples of
   how engines are implemented
 - Create command that serves a simple dashboard the visualizes the services that are deployed
