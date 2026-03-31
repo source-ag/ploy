@@ -39,26 +39,26 @@ func doDeployment(deploymentConfig engine.Deployment) error {
 	p := CreateDeploymentPrinter(deploymentConfig.Id())
 	deploymentEngine, err := engine.GetEngine(deploymentConfig.Type())
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 	}
 	p("checking deployed version...")
 	version, err := deploymentEngine.CheckVersion(deploymentConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 	}
 	if version != deploymentConfig.Version() {
 		p("version '%s' does not match expected version '%s'. Deploying new version...", version, deploymentConfig.Version())
 		if len(deploymentConfig.PreDeployCommand()) > 0 {
 			if err = runDeploymentScript("pre", deploymentConfig.PreDeployCommand(), deploymentConfig.Version(), p); err != nil {
-				return err
+				return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 			}
 		}
 		if err = deploymentEngine.Deploy(deploymentConfig, p); err != nil {
-			return err
+			return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 		}
 		if len(deploymentConfig.PostDeployCommand()) > 0 {
 			if err = runDeploymentScript("post", deploymentConfig.PostDeployCommand(), deploymentConfig.Version(), p); err != nil {
-				return err
+				return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 			}
 		}
 		p("version %s deployed successfully!", deploymentConfig.Version())
