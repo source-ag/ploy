@@ -112,6 +112,11 @@ There are currently three supported deployment engines:
 
 Fork the repo, make your changes, and submit a pull request.
 
+## Release
+
+To release a new version you can do it in the UI: https://github.com/source-ag/ploy/releases
+Source-deployments will automatically load the latest release.
+
 ## TODO
 
 - Better error handling
@@ -126,3 +131,4 @@ Fork the repo, make your changes, and submit a pull request.
 ## Authors
 
 - [@DandyDev](https://www.github.com/DandyDev)
+
