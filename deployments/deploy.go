@@ -14,16 +14,16 @@ import (
 )
 
 func Deploy(_ *cobra.Command, args []string) {
-	deployments, err := LoadDeploymentsFromFile(args[0])
+	cfg, err := LoadConfigFromFile(args[0])
 	cobra.CheckErr(err)
 
-	errorChan := make(chan error, len(deployments))
+	errorChan := make(chan error, len(cfg.Deployments))
 	var wg sync.WaitGroup
-	for _, deployment := range deployments {
+	for _, deployment := range cfg.Deployments {
 		wg.Add(1)
 		go func(deployment engine.Deployment) {
 			defer wg.Done()
-			errorChan <- doDeployment(deployment)
+			errorChan <- doDeployment(deployment, cfg.Settings.PostDeployCommands)
 		}(deployment)
 	}
 	wg.Wait()
@@ -35,7 +35,7 @@ func Deploy(_ *cobra.Command, args []string) {
 	cobra.CheckErr(result.ErrorOrNil())
 }
 
-func doDeployment(deploymentConfig engine.Deployment) error {
+func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [][]string) error {
 	p := CreateDeploymentPrinter(deploymentConfig.Id())
 	deploymentEngine, err := engine.GetEngine(deploymentConfig.Type())
 	if err != nil {

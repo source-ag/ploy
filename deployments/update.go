@@ -13,10 +13,10 @@ func Update(_ *cobra.Command, args []string) {
 	nrArgs := len(args)
 	serviceIds := args[1 : nrArgs-1]
 	version := args[nrArgs-1]
-	deployments, err := LoadDeploymentsFromFile(deploymentsConfigPath)
+	cfg, err := LoadConfigFromFile(deploymentsConfigPath)
 	cobra.CheckErr(err)
 	for _, serviceId := range serviceIds {
-		service := utils.Find(deployments, func(d engine.Deployment) bool {
+		service := utils.Find(cfg.Deployments, func(d engine.Deployment) bool {
 			return d.Id() == serviceId
 		})
 		if service == nil {
@@ -24,6 +24,6 @@ func Update(_ *cobra.Command, args []string) {
 		}
 		(*service).SetVersion(version)
 	}
-	err = WriteDeploymentsToFile(deploymentsConfigPath, deployments)
+	err = WriteConfigToFile(deploymentsConfigPath, cfg)
 	cobra.CheckErr(err)
 }

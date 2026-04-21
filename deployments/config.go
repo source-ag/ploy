@@ -18,7 +18,6 @@ type Config struct {
 	Deployments []engine.Deployment
 }
 
-// deploymentsYAML is the raw YAML shape, used only for marshaling/unmarshaling.
 type deploymentsYAML struct {
 	Settings    Settings         `yaml:"settings,omitempty"`
 	Deployments []map[string]any `yaml:"deployments"`
@@ -65,20 +64,6 @@ func WriteConfigToFile(deploymentsConfigPath string, cfg Config) error {
 		Deployments: deploymentMaps,
 	}
 	return marshalYamlToFile(raw, deploymentsConfigPath)
-}
-
-// LoadDeploymentsFromFile is a compatibility shim; callers will migrate to LoadConfigFromFile.
-func LoadDeploymentsFromFile(deploymentsConfigPath string) ([]engine.Deployment, error) {
-	cfg, err := LoadConfigFromFile(deploymentsConfigPath)
-	if err != nil {
-		return nil, err
-	}
-	return cfg.Deployments, nil
-}
-
-// WriteDeploymentsToFile is a compatibility shim; callers will migrate to WriteConfigToFile.
-func WriteDeploymentsToFile(deploymentsConfigPath string, deployments []engine.Deployment) error {
-	return WriteConfigToFile(deploymentsConfigPath, Config{Deployments: deployments})
 }
 
 func marshalYamlToFile(in interface{}, path string) (err error) {
