@@ -33,3 +33,46 @@ func TestRunDeploymentScript_InjectsEnvVars(t *testing.T) {
 		t.Errorf("env vars: got %q, want %q", got, want)
 	}
 }
+
+func TestRunGlobalCommands_AllCommandsRun(t *testing.T) {
+	tmpDir := t.TempDir()
+	file1 := filepath.Join(tmpDir, "cmd1.txt")
+	file2 := filepath.Join(tmpDir, "cmd2.txt")
+
+	commands := [][]string{
+		{"sh", "-c", fmt.Sprintf("touch %s", file1)},
+		{"sh", "-c", fmt.Sprintf("touch %s", file2)},
+	}
+
+	p := func(string, ...any) {}
+	runGlobalCommands(commands, "my-service", "v1.0.0", p)
+
+	if _, err := os.Stat(file1); os.IsNotExist(err) {
+		t.Error("first command did not run: file1 not created")
+	}
+	if _, err := os.Stat(file2); os.IsNotExist(err) {
+		t.Error("second command did not run: file2 not created")
+	}
+}
+
+func TestRunGlobalCommands_FailureDoesNotBlockOthers(t *testing.T) {
+	tmpDir := t.TempDir()
+	file2 := filepath.Join(tmpDir, "cmd2.txt")
+
+	commands := [][]string{
+		{"false"},
+		{"sh", "-c", fmt.Sprintf("touch %s", file2)},
+	}
+
+	p := func(string, ...any) {}
+	runGlobalCommands(commands, "my-service", "v1.0.0", p)
+
+	if _, err := os.Stat(file2); os.IsNotExist(err) {
+		t.Error("second command did not run after first command failure")
+	}
+}
+
+func TestRunGlobalCommands_EmptyListIsNoop(t *testing.T) {
+	p := func(string, ...any) {}
+	runGlobalCommands([][]string{}, "my-service", "v1.0.0", p)
+}

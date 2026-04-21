@@ -56,6 +56,7 @@ func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [
 		if err = deploymentEngine.Deploy(deploymentConfig, p); err != nil {
 			return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 		}
+		runGlobalCommands(globalPostDeployCommands, deploymentConfig.Id(), deploymentConfig.Version(), p)
 		if len(deploymentConfig.PostDeployCommand()) > 0 {
 			if err = runDeploymentScript("post", deploymentConfig.PostDeployCommand(), deploymentConfig.Version(), deploymentConfig.Id(), p); err != nil {
 				return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
@@ -63,9 +64,19 @@ func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [
 		}
 		p("version %s deployed successfully!", deploymentConfig.Version())
 		return nil
-	} else {
-		p("version '%s' matches expected version '%s'. Skipping...", version, deploymentConfig.Version())
-		return nil
+	}
+	p("version '%s' matches expected version '%s'. Skipping...", version, deploymentConfig.Version())
+	return nil
+}
+
+func runGlobalCommands(commands [][]string, deploymentId string, version string, p func(string, ...any)) {
+	for _, cmd := range commands {
+		if len(cmd) == 0 {
+			continue
+		}
+		if err := runDeploymentScript("global post", cmd, version, deploymentId, p); err != nil {
+			p("global post-deploy command failed (ignored): %v\n", err)
+		}
 	}
 }
 
