@@ -49,7 +49,7 @@ func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [
 	if version != deploymentConfig.Version() {
 		p("version '%s' does not match expected version '%s'. Deploying new version...", version, deploymentConfig.Version())
 		if len(deploymentConfig.PreDeployCommand()) > 0 {
-			if err = runDeploymentScript("pre", deploymentConfig.PreDeployCommand(), deploymentConfig.Version(), p); err != nil {
+			if err = runDeploymentScript("pre", deploymentConfig.PreDeployCommand(), deploymentConfig.Version(), deploymentConfig.Id(), p); err != nil {
 				return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 			}
 		}
@@ -57,7 +57,7 @@ func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [
 			return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 		}
 		if len(deploymentConfig.PostDeployCommand()) > 0 {
-			if err = runDeploymentScript("post", deploymentConfig.PostDeployCommand(), deploymentConfig.Version(), p); err != nil {
+			if err = runDeploymentScript("post", deploymentConfig.PostDeployCommand(), deploymentConfig.Version(), deploymentConfig.Id(), p); err != nil {
 				return fmt.Errorf("%s: %w", deploymentConfig.Id(), err)
 			}
 		}
@@ -69,11 +69,12 @@ func doDeployment(deploymentConfig engine.Deployment, globalPostDeployCommands [
 	}
 }
 
-func runDeploymentScript(context string, deploymentCommand []string, version string, p func(string, ...any)) error {
+func runDeploymentScript(context string, deploymentCommand []string, version string, deploymentId string, p func(string, ...any)) error {
 	p("running %s-deployment command %s...", context, strings.Join(deploymentCommand, " "))
 	cmd := exec.Command(deploymentCommand[0], deploymentCommand[1:]...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("VERSION=%s", version))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DEPLOYMENT_ID=%s", deploymentId))
 	output, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
