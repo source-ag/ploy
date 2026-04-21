@@ -12,12 +12,12 @@ import (
 var FailOnVersionMismatch bool
 
 func Verify(_ *cobra.Command, args []string) {
-	deployments, err := LoadDeploymentsFromFile(args[0])
+	cfg, err := LoadConfigFromFile(args[0])
 	cobra.CheckErr(err)
 
-	errorChan := make(chan error, len(deployments))
+	errorChan := make(chan error, len(cfg.Deployments))
 	var wg sync.WaitGroup
-	for _, deployment := range deployments {
+	for _, deployment := range cfg.Deployments {
 		wg.Add(1)
 		go func(deployment engine.Deployment) {
 			defer wg.Done()

@@ -3,57 +3,67 @@ package deployments
 import (
 	"bytes"
 	"os"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/source-ag/ploy/engine"
 	"gopkg.in/yaml.v3"
 )
 
-type Deployments struct {
+type Settings struct {
+	PostDeployCommands [][]string `yaml:"post-deploy-commands,omitempty"`
+}
+
+type Config struct {
+	Settings    Settings
+	Deployments []engine.Deployment
+}
+
+type deploymentsYAML struct {
+	Settings    Settings         `yaml:"settings,omitempty"`
 	Deployments []map[string]any `yaml:"deployments"`
 }
 
-func LoadDeploymentsFromFile(deploymentsConfigPath string) ([]engine.Deployment, error) {
-	deploymentsConfig := &Deployments{}
+func LoadConfigFromFile(deploymentsConfigPath string) (Config, error) {
+	raw := &deploymentsYAML{}
 	b, err := os.ReadFile(deploymentsConfigPath)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
-	err = yaml.Unmarshal(b, deploymentsConfig)
-	if err != nil {
-		return nil, err
+	if err = yaml.Unmarshal(b, raw); err != nil {
+		return Config{}, err
 	}
-	deployments := make([]engine.Deployment, 0, len(deploymentsConfig.Deployments))
-	for _, deployment := range deploymentsConfig.Deployments {
+	deployments := make([]engine.Deployment, 0, len(raw.Deployments))
+	for _, deployment := range raw.Deployments {
 		deploymentEngine, err := engine.GetEngine(deployment["type"].(string))
 		if err != nil {
-			return nil, err
+			return Config{}, err
 		}
 		deploymentConfig := deploymentEngine.ResolveConfigStruct()
-		err = mapstructure.Decode(deployment, deploymentConfig)
-		if err != nil {
-			return nil, err
+		if err = mapstructure.Decode(deployment, deploymentConfig); err != nil {
+			return Config{}, err
 		}
 		deployments = append(deployments, deploymentConfig)
 	}
-	return deployments, nil
+	return Config{
+		Settings:    raw.Settings,
+		Deployments: deployments,
+	}, nil
 }
 
-func WriteDeploymentsToFile(deploymentsConfigPath string, deployments []engine.Deployment) error {
-	deploymentMaps := make([]map[string]any, 0)
-	for _, deployment := range deployments {
+func WriteConfigToFile(deploymentsConfigPath string, cfg Config) error {
+	deploymentMaps := make([]map[string]any, 0, len(cfg.Deployments))
+	for _, deployment := range cfg.Deployments {
 		var deploymentMap map[string]any
-		err := mapstructure.Decode(deployment, &deploymentMap)
-		if err != nil {
+		if err := mapstructure.Decode(deployment, &deploymentMap); err != nil {
 			return err
 		}
 		deploymentMaps = append(deploymentMaps, deploymentMap)
 	}
-	serializableDeployments := Deployments{Deployments: deploymentMaps}
-	err := marshalYamlToFile(serializableDeployments, deploymentsConfigPath)
-	if err != nil {
-		return err
+	raw := deploymentsYAML{
+		Settings:    cfg.Settings,
+		Deployments: deploymentMaps,
 	}
-	return nil
+	return marshalYamlToFile(raw, deploymentsConfigPath)
 }
 
 func marshalYamlToFile(in interface{}, path string) (err error) {
