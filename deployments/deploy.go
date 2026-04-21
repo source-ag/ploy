@@ -75,7 +75,7 @@ func runGlobalCommands(commands [][]string, deploymentId string, version string,
 			continue
 		}
 		if err := runDeploymentScript("global post", cmd, version, deploymentId, p); err != nil {
-			p("global post-deploy command failed (ignored): %v\n", err)
+			p("global post-deploy command failed (ignored): %v", err)
 		}
 	}
 }
